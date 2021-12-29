@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 import CurrencyRow from './CurrencyRow'
 
-const BASE_URL = 'https://api.exchangeratesapi.io/latest'
+// const BASE_URL = 'https://api.exchangeratesapi.io/latest'
+const ACCESS_KEY = 'd550e80a38cb3394859f2f09daf15cb8';
+const BASE_URL = `http://api.exchangeratesapi.io/v1/latest?access_key=${ACCESS_KEY}`;
+
 
 function App() {
   const [currencyOptions, setCurrencyOptions] = useState([])
@@ -15,7 +18,7 @@ function App() {
   let toAmount, fromAmount
   if (amountInFromCurrency) {
     fromAmount = amount
-    toAmount = amount * exchangeRate
+    toAmount = amount * exchangeRate || 0
   } else {
     toAmount = amount
     fromAmount = amount / exchangeRate
@@ -26,20 +29,32 @@ function App() {
       .then(res => res.json())
       .then(data => {
         const firstCurrency = Object.keys(data.rates)[0]
-        setCurrencyOptions([data.base, ...Object.keys(data.rates)])
+        // setCurrencyOptions([data.base, ...Object.keys(data.rates)])
+        setCurrencyOptions(Object.keys(data.rates))
         setFromCurrency(data.base)
         setToCurrency(firstCurrency)
         setExchangeRate(data.rates[firstCurrency])
       })
   }, [])
 
+  // useEffect(() => {
+  //   if (fromCurrency != null && toCurrency != null) {
+  //     fetch(`${BASE_URL}?base=${fromCurrency}&symbols=${toCurrency}`)
+  //       .then(res => res.json())
+  //       .then(data => setExchangeRate(data.rates[toCurrency]))
+  //   }
+  // }, [fromCurrency, toCurrency])
+
   useEffect(() => {
-    if (fromCurrency != null && toCurrency != null) {
-      fetch(`${BASE_URL}?base=${fromCurrency}&symbols=${toCurrency}`)
-        .then(res => res.json())
-        .then(data => setExchangeRate(data.rates[toCurrency]))
+    if (fromCurrency === toCurrency && fromCurrency != null) {
+      setExchangeRate(1);
+    } else if (fromCurrency != null && toCurrency != null) {
+      // fetch(`${BASE_URL}?base=${fromCurrency}&symbols=${toCurrency}`)
+      fetch(BASE_URL)
+        .then(response => response.json())
+        .then(data => setExchangeRate(data.rates[toCurrency]));
     }
-  }, [fromCurrency, toCurrency])
+  }, [fromCurrency, toCurrency]);
 
   function handleFromAmountChange(e) {
     setAmount(e.target.value)
